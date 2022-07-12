@@ -1,0 +1,14 @@
+{% extends 'auctions/layout.html' %}
+
+{% block body %}
+    <div class="listing-card-entry">
+        <h2>{{ listing.title }}</h2>
+        <div class="image-listing">
+            <img src="{{ listing.image.url }}" alt="{{ listing.title }}">
+        </div>
+        {% if listing.description %}
+            <h3> {{ listing.description }}</h3>
+        {% endif %}
+        <h3> ${{ listing.starting_bid }}</h3>
+    </div>
+{% endblock body %}

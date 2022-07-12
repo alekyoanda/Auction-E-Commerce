@@ -1,0 +1,9 @@
+body {
+    padding: 10px;
+    margin: 200px;
+}
+
+.listing-card {
+    display: flex;
+    align-items: center;
+}
