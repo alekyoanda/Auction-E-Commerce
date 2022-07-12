@@ -1,3 +1,4 @@
+from email import message
 from django.contrib.auth import authenticate, login, logout
 from django.db import IntegrityError
 from django.http import HttpResponse, HttpResponseRedirect
@@ -68,6 +69,37 @@ def register(request):
 
 def listing(request, listing_id):
     listing_item = AuctionListing.objects.get(pk=listing_id)
+    listing_bids = listing_item.bids.all()
+    highest_bid = Bid.highest_bid(listing_bids=listing_bids, listing_item=listing_item)
+    if request.method == "POST":
+        message = ""
+        current_user = request.user
+        bid_amount = request.POST["bid_amount"]
+        if bid_amount == "":
+            message = "Please fill the field before place a bid!"
+        elif float(bid_amount) < highest_bid:
+            message = f"Bid must be greater than {listing_item.starting_bid}!"
+        else:
+            message = "Success place a bid!"
+            current_listing_bid = listing_bids.filter(user=current_user).first()
+            if current_listing_bid == None:
+                Bid.objects.create(user=current_user, bid_amount=bid_amount, listing_item=listing_item)
+            else:
+                current_listing_bid.bid_amount = request.POST["bid_amount"]
+                current_listing_bid.save()
+
+        updated_listing_bids = listing_item.bids.all()
+        highest_bid = Bid.highest_bid(listing_bids=updated_listing_bids, listing_item=listing_item)
+
+        return render(request, "auctions/listing.html", {
+            "listing": listing_item,
+            "listing_bids": updated_listing_bids,
+            "highest_bid": highest_bid,
+            "message": message
+        })
+    
     return render(request, "auctions/listing.html", {
-        "listing": listing_item
+        "listing": listing_item,
+        "listing_bids": listing_bids,
+        "highest_bid": highest_bid
     })

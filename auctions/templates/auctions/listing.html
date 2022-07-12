@@ -10,5 +10,19 @@
             <h3> {{ listing.description }}</h3>
         {% endif %}
         <h3> ${{ listing.starting_bid }}</h3>
+        <h5>{{ listing_bids | length }} bid(s) so far</h5>
+        <h5>Highest bid: ${{ highest_bid }}</h5>
+        {% if message %}
+        <div class="alert alert-info" role="alert">
+            {{ message }}
+        </div>
+        {% endif %}
+        <form action="{% url 'listing_item' listing.id %}" method="post">
+            {% csrf_token %}
+            <div class="form-group">
+                <input autofocus class="form-control" type="number" min={{ highest_bid }} step="any" name="bid_amount" placeholder="Bid">
+                <input class="btn btn-primary" type="submit" value="Place Bid">
+            </div>
+        </form>
     </div>
 {% endblock body %}
