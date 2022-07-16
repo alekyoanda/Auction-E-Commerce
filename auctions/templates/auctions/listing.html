@@ -2,7 +2,7 @@
 
 {% block body %}
     <div class="listing-card-entry">
-        <h2>{{ listing.title }}</h2>
+        <h2>Listing: {{ listing.title }}</h2>
         <div class="image-listing">
             <img src="{{ listing.image.url }}" alt="{{ listing.title }}">
         </div>
@@ -10,7 +10,11 @@
             <h3> {{ listing.description }}</h3>
         {% endif %}
         <h3> ${{ listing.starting_bid }}</h3>
-        <h5>{{ listing_bids | length }} bid(s) so far</h5>
+        <h5>{{ listing_bids | length }} bid(s) so far.
+        {% if is_current_user_highest_bid %}
+            Your bid is the current highest bid.
+        {% endif %}
+        </h5>
         <h5>Highest bid: ${{ highest_bid }}</h5>
         {% if message %}
         <div class="alert alert-info" role="alert">
@@ -20,9 +24,24 @@
         <form action="{% url 'listing_item' listing.id %}" method="post">
             {% csrf_token %}
             <div class="form-group">
-                <input autofocus class="form-control" type="number" min={{ highest_bid }} step="any" name="bid_amount" placeholder="Bid">
+                <div class="mb-3">
+                    <input autofocus class="form-control" type="number" min={{ highest_bid }} step="any" name="bid_amount" placeholder="Bid">
+                </div>
                 <input class="btn btn-primary" type="submit" value="Place Bid">
             </div>
         </form>
+        <div class="detail-listing">
+            <h2>Details</h2>
+            <ul>
+                <li>Listed by: {{ listing.user.username }}</li>
+                <li>Category: 
+                {% if listing.category == None %}
+                    No Category Listed
+                {% else %}
+                    {{ listing.category.name }}
+                {% endif %}
+                </li>   
+            </ul>
+        </div>
     </div>
 {% endblock body %}

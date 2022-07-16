@@ -27,7 +27,7 @@ class AuctionListing(models.Model):
     
 
 class Bid(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="bid_list")
     bid_amount = models.FloatField()
     time_updated = models.DateTimeField(auto_now=True)
     listing_item = models.ForeignKey(AuctionListing, on_delete=models.CASCADE, related_name="bids", default=AuctionListing.objects.first().pk)

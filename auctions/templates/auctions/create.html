@@ -1,0 +1,33 @@
+{% extends 'auctions/layout.html' %}
+
+{% block body %}
+    <h1>Create New Listing</h1>
+    <form action="{% url 'create_listing' %}" method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="mb-3">
+            <label for="title-form" class="form-label">Title</label>
+            <input autofocus type="text" class="form-control" id="title-form" name="title" placeholder="Title" maxlength="64">
+        </div>
+        <div class="mb-3">
+            <label for="description-form" class="form-label">Description</label>
+            <textarea class="form-control" id="description-form" name="description" placeholder="Description" rows="4"></textarea>
+        </div>
+        <div class="mb-3">
+            <label for="title-form" class="form-label">Starting Bid</label>
+            <input type="number" class="form-control" id="starting_bid-form" name="starting_bid" placeholder="Starting Bid" min="0" step="any">
+        </div>
+        <div class="mb-3">
+            <label for="image-form" class="form-label">Image</label>
+            <input type="file" class="form-control" id="image-form" name="image" accept="image/apng, image/avif, image/gif, image/jpeg, image/png, image/svg+xml, image/webp">
+        </div>
+        <div class="mb-3">
+            <label for="categories-form" class="form-label">Select Category</label>
+            <select class="form-select" id="categories-form" name="category" aria-label="Categories Select">
+                {% for category in categories %}
+                    <option value="{{ category }}">{{ category }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary">Create</button>
+    </form>
+{% endblock body %}

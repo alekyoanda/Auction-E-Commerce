@@ -6,7 +6,7 @@ from django.shortcuts import render
 from django.urls import reverse
 from django.contrib.auth.decorators import login_required
 
-from .models import User, AuctionListing, Bid
+from .models import User, AuctionListing, Bid, Category
 
 
 def index(request):
@@ -68,12 +68,16 @@ def register(request):
         return render(request, "auctions/register.html")
 
 def listing(request, listing_id):
+    current_user = request.user
+    is_current_user_highest_bid = False
     listing_item = AuctionListing.objects.get(pk=listing_id)
     listing_bids = listing_item.bids.all()
     highest_bid = Bid.highest_bid(listing_bids=listing_bids, listing_item=listing_item)
+    if len(listing_bids.filter(bid_amount=highest_bid)) != 0:
+        is_current_user_highest_bid = listing_bids.filter(bid_amount=highest_bid).first().user == current_user
+        
     if request.method == "POST":
         message = ""
-        current_user = request.user
         bid_amount = request.POST["bid_amount"]
         if bid_amount == "":
             message = "Please fill the field before place a bid!"
@@ -90,16 +94,42 @@ def listing(request, listing_id):
 
         updated_listing_bids = listing_item.bids.all()
         highest_bid = Bid.highest_bid(listing_bids=updated_listing_bids, listing_item=listing_item)
+        is_current_user_highest_bid = listing_bids.filter(bid_amount=highest_bid).first().user == current_user
 
         return render(request, "auctions/listing.html", {
             "listing": listing_item,
             "listing_bids": updated_listing_bids,
             "highest_bid": highest_bid,
-            "message": message
+            "message": message,
+            "is_current_user_highest_bid": is_current_user_highest_bid
         })
     
     return render(request, "auctions/listing.html", {
         "listing": listing_item,
         "listing_bids": listing_bids,
-        "highest_bid": highest_bid
+        "highest_bid": highest_bid,
+        "is_current_user_highest_bid": is_current_user_highest_bid
+    })
+
+def create_listing(request):
+    
+    if (request.method == "POST"):
+        title = request.POST["title"]
+        description = request.POST["description"]
+        starting_bid = request.POST["starting_bid"]
+        image = request.FILES["image"]
+        print(image)
+        category_name = request.POST["category"]
+        category = Category.objects.get(name=category_name)
+
+        # TODO --> INPUT VALIDATION
+
+        new_listing = AuctionListing(user=request.user, title=title, description=description, starting_bid=starting_bid, image=image, category=category)
+        new_listing.save()
+    
+        return HttpResponseRedirect(reverse("index"))
+
+    categories = Category.objects.all()
+    return render(request, "auctions/create.html",{
+        "categories": categories
     })
