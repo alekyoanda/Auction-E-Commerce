@@ -2,11 +2,11 @@ from email import message
 from django.contrib.auth import authenticate, login, logout
 from django.db import IntegrityError
 from django.http import HttpResponse, HttpResponseRedirect
-from django.shortcuts import render
+from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.contrib.auth.decorators import login_required
 
-from .models import User, AuctionListing, Bid, Category
+from .models import User, AuctionListing, Bid, Category, Watchlist
 
 
 def index(request):
@@ -71,13 +71,18 @@ def listing(request, listing_id):
     current_user = request.user
     is_current_user_highest_bid = False
     listing_item = AuctionListing.objects.get(pk=listing_id)
+    is_watchlist = False
+    if current_user.is_authenticated:
+        is_watchlist = len(Watchlist.objects.filter(user=current_user, listing=listing_item)) != 0
+
+    print(is_watchlist)
     listing_bids = listing_item.bids.all()
     highest_bid = Bid.highest_bid(listing_bids=listing_bids, listing_item=listing_item)
+    message = ""
     if len(listing_bids.filter(bid_amount=highest_bid)) != 0:
         is_current_user_highest_bid = listing_bids.filter(bid_amount=highest_bid).first().user == current_user
         
     if request.method == "POST":
-        message = ""
         bid_amount = request.POST["bid_amount"]
         if bid_amount == "":
             message = "Please fill the field before place a bid!"
@@ -101,35 +106,75 @@ def listing(request, listing_id):
             "listing_bids": updated_listing_bids,
             "highest_bid": highest_bid,
             "message": message,
-            "is_current_user_highest_bid": is_current_user_highest_bid
+            "is_current_user_highest_bid": is_current_user_highest_bid,
+            "is_watchlist": is_watchlist
         })
     
+    if not current_user.is_authenticated:
+        message = "Log in to place a bid"
     return render(request, "auctions/listing.html", {
         "listing": listing_item,
         "listing_bids": listing_bids,
         "highest_bid": highest_bid,
-        "is_current_user_highest_bid": is_current_user_highest_bid
+        "is_current_user_highest_bid": is_current_user_highest_bid,
+        "is_watchlist": is_watchlist,
+        "message": message
     })
 
 def create_listing(request):
-    
+    categories = Category.objects.all()
+
     if (request.method == "POST"):
         title = request.POST["title"]
         description = request.POST["description"]
         starting_bid = request.POST["starting_bid"]
-        image = request.FILES["image"]
+        image = request.FILES.get("image")
         print(image)
         category_name = request.POST["category"]
         category = Category.objects.get(name=category_name)
 
-        # TODO --> INPUT VALIDATION
-
-        new_listing = AuctionListing(user=request.user, title=title, description=description, starting_bid=starting_bid, image=image, category=category)
-        new_listing.save()
+        if title == "" or starting_bid == "" or image == None:
+            message = "Please fill out all forms that are not optional!"
+            return render(request, "auctions/create.html", {
+                "message": message,
+                "categories": categories
+            })
+        else:
+            new_listing = AuctionListing(user=request.user, title=title, description=description, starting_bid=starting_bid, image=image, category=category)
+            new_listing.save()
     
-        return HttpResponseRedirect(reverse("index"))
-
-    categories = Category.objects.all()
+            return HttpResponseRedirect(reverse("index"))
+    
     return render(request, "auctions/create.html",{
         "categories": categories
+    })
+
+def make_unactive(request, listing_id):
+    if request.method == "POST":
+        listing_item = AuctionListing.objects.get(pk=listing_id)
+        listing_item.active_status = False
+        listing_item.save()
+        return HttpResponseRedirect(reverse("listing_item", args=[listing_id]))
+
+def add_to_watchlist(request, listing_id):
+    if (request.method == "POST"):
+        current_user = request.user
+        listing_item = AuctionListing.objects.get(pk=listing_id)
+        Watchlist.objects.create(user=current_user, listing=listing_item)
+
+        return HttpResponseRedirect(reverse("listing_item", args=[listing_id]))
+    
+def remove_from_watchlist(request, listing_id):
+    if request.method == "POST":
+        current_user = request.user
+        listing_item = AuctionListing.objects.get(pk=listing_id)
+        Watchlist.objects.filter(user=current_user, listing=listing_item).delete()
+
+        return HttpResponseRedirect(reverse("listing_item", args=[listing_id]))
+
+def watchlist(request, username):
+    current_user = request.user
+    watchlist_objects = Watchlist.objects.filter(user=current_user)
+    return render(request, "auctions/watchlist.html", {
+        "watchlists": watchlist_objects
     })

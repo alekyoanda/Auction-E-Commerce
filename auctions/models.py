@@ -21,6 +21,7 @@ class AuctionListing(models.Model):
     image = models.ImageField(upload_to='auctions/resources/upload')
     date_created = models.DateTimeField(default=datetime.now())
     category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name="listings", null=True, blank=True)
+    active_status = models.BooleanField(default=True)
 
     def __str__(self) -> str:
         return self.title
@@ -29,8 +30,8 @@ class AuctionListing(models.Model):
 class Bid(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="bid_list")
     bid_amount = models.FloatField()
-    time_updated = models.DateTimeField(auto_now=True)
-    listing_item = models.ForeignKey(AuctionListing, on_delete=models.CASCADE, related_name="bids", default=AuctionListing.objects.first().pk)
+    time_updated = models.DateTimeField(auto_now=True) 
+    listing_item = models.ForeignKey(AuctionListing, on_delete=models.CASCADE, related_name="bids", null=True, blank=True)
 
     @staticmethod
     def highest_bid(listing_bids, listing_item):
@@ -42,3 +43,13 @@ class Bid(models.Model):
 
     def __str__(self) -> str:
         return f"Bid ({self.user.username} | {self.listing_item.title}) "
+
+class Commentary(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="comments")
+    listing = models.ForeignKey(AuctionListing, on_delete=models.CASCADE, related_name="comments")
+    text_comment = models.TextField()
+    created = models.DateTimeField(default=datetime.now())
+
+class Watchlist(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="watchlist")
+    listing = models.ForeignKey(AuctionListing, on_delete=models.CASCADE, related_name="watchlist")

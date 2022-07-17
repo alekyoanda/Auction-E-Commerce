@@ -2,7 +2,34 @@
 
 {% block body %}
     <div class="listing-card-entry">
-        <h2>Listing: {{ listing.title }}</h2>
+        <div class="header">
+            <h2>Listing: {{ listing.title }}</h2>
+            {% if user == listing.user and user.is_authenticated and listing.active_status %}
+                <form action="{% url 'make_unactive' listing.id %}" method="post">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <input class="btn btn-danger" type="submit" value="Make Unactive">
+                    </div>
+                </form>
+            {% elif user != listing.user and user.is_authenticated and listing.active_status %}
+                {% if not is_watchlist %}
+                    <form action="{% url 'add_to_watchlist' listing.id %}" method="post">
+                        {% csrf_token %}
+                        <div class="form-group">
+                            <input class="btn btn-primary" type="submit" value="Add to watchlist">
+                        </div>
+                    </form>
+                {% else %}
+                    <form action="{% url 'remove_from_watchlist' listing.id %}" method="post">
+                        {% csrf_token %}
+                        <div class="form-group">
+                            <input class="btn btn-danger" type="submit" value="Remove from watchlist">
+                        </div>
+                    </form>
+                {% endif %}
+            {% endif %}
+        </div>
+        
         <div class="image-listing">
             <img src="{{ listing.image.url }}" alt="{{ listing.title }}">
         </div>
@@ -21,15 +48,17 @@
             {{ message }}
         </div>
         {% endif %}
-        <form action="{% url 'listing_item' listing.id %}" method="post">
-            {% csrf_token %}
-            <div class="form-group">
-                <div class="mb-3">
-                    <input autofocus class="form-control" type="number" min={{ highest_bid }} step="any" name="bid_amount" placeholder="Bid">
+        {% if user.is_authenticated and listing.active_status and user != listing.user %}
+            <form action="{% url 'listing_item' listing.id %}" method="post">
+                {% csrf_token %}
+                <div class="form-group">
+                    <div class="mb-3">
+                        <input autofocus class="form-control" type="number" min={{ highest_bid }} step="any" name="bid_amount" placeholder="Bid">
+                    </div>
+                    <input class="btn btn-primary" type="submit" value="Place Bid">
                 </div>
-                <input class="btn btn-primary" type="submit" value="Place Bid">
-            </div>
-        </form>
+            </form>
+        {% endif %}
         <div class="detail-listing">
             <h2>Details</h2>
             <ul>

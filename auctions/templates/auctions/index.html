@@ -3,21 +3,23 @@
 {% block body %}
     <h2>Active Listings</h2>
     {% for listing in listings %}
-        <a href="{% url 'listing_item' listing_id=listing.id %}" class="listing-button">
-            <div class="listing-card">
-                <div class="image-listing">
-                    <img src="{{ listing.image.url }}" alt="{{ listing.title }}">
+        {% if listing.active_status %}
+            <a href="{% url 'listing_item' listing_id=listing.id %}" class="listing-button">
+                <div class="listing-card">
+                    <div class="image-listing">
+                        <img src="{{ listing.image.url }}" alt="{{ listing.title }}">
+                    </div>
+                    <div class="detail-listing">
+                        <h2>{{ listing.title }}</h2>
+                        <h3>Price: ${{ listing.starting_bid }}</h3>
+                        {% if listing.description %}
+                            <h3> {{ listing.description }}</h3>
+                        {% endif %}
+                        <h5> Created at {{ listing.date_created }}</h5>
+                    </div>
                 </div>
-                <div class="detail-listing">
-                    <h2>{{ listing.title }}</h2>
-                    <h3>Price: ${{ listing.starting_bid }}</h3>
-                    {% if listing.description %}
-                        <h3> {{ listing.description }}</h3>
-                    {% endif %}
-                    <h5> Created at {{ listing.date_created }}</h5>
-                </div>
-            </div>
-        </a>
+            </a>
+        {% endif %}
     {% endfor %}
         
 {% endblock %}

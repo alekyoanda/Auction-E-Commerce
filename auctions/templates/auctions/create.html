@@ -2,6 +2,11 @@
 
 {% block body %}
     <h1>Create New Listing</h1>
+    {% if message %}
+        <div class="alert alert-info" role="alert">
+            {{ message }}
+        </div>
+    {% endif %}
     <form action="{% url 'create_listing' %}" method="post" enctype="multipart/form-data">
         {% csrf_token %}
         <div class="mb-3">
@@ -9,7 +14,7 @@
             <input autofocus type="text" class="form-control" id="title-form" name="title" placeholder="Title" maxlength="64">
         </div>
         <div class="mb-3">
-            <label for="description-form" class="form-label">Description</label>
+            <label for="description-form" class="form-label">Description (optional)</label>
             <textarea class="form-control" id="description-form" name="description" placeholder="Description" rows="4"></textarea>
         </div>
         <div class="mb-3">

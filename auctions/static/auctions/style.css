@@ -76,3 +76,9 @@ a.listing-button:hover{
     align-items: center;
     justify-content: flex-start;
 }
+
+.listing-card-entry .header{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
