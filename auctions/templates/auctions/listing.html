@@ -72,5 +72,32 @@
                 </li>   
             </ul>
         </div>
+        <div class="comment-section">
+            <h2>Comments</h2>
+            <div class="comment-detail">
+                {% for comment in comments %}
+                    <div class="comment-per-user">
+                        <h4>{{ comment.user.username }}</h5>
+                        <h5>{{ comment.created }}</h5>
+                        <p>{{ comment.text_comment }}</p>
+                    </div>
+                {% empty %}
+                    No comment
+                {% endfor %}
+            </div>
+            <br>
+            {% if user.is_authenticated and user != listing.user %}
+                <div class="comment-form">
+                    <form action="{% url 'add_comment' listing.id %}" method="post">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="comment-form" class="form-label">Add comment</label>
+                            <textarea class="form-control" id="comment-form" name="comment" placeholder="Type your comment here" rows="4"></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Add comment</button>
+                    </form>
+                </div>
+            {% endif %}
+        </div>
     </div>
 {% endblock body %}

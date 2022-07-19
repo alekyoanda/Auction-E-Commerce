@@ -6,7 +6,7 @@ from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.contrib.auth.decorators import login_required
 
-from .models import User, AuctionListing, Bid, Category, Watchlist
+from .models import Commentary, User, AuctionListing, Bid, Category, Watchlist
 
 
 def index(request):
@@ -72,10 +72,10 @@ def listing(request, listing_id):
     is_current_user_highest_bid = False
     listing_item = AuctionListing.objects.get(pk=listing_id)
     is_watchlist = False
+    comments = Commentary.objects.filter(listing=listing_item)
     if current_user.is_authenticated:
         is_watchlist = len(Watchlist.objects.filter(user=current_user, listing=listing_item)) != 0
 
-    print(is_watchlist)
     listing_bids = listing_item.bids.all()
     highest_bid = Bid.highest_bid(listing_bids=listing_bids, listing_item=listing_item)
     message = ""
@@ -107,7 +107,8 @@ def listing(request, listing_id):
             "highest_bid": highest_bid,
             "message": message,
             "is_current_user_highest_bid": is_current_user_highest_bid,
-            "is_watchlist": is_watchlist
+            "is_watchlist": is_watchlist,
+            "comments": comments
         })
     
     if not current_user.is_authenticated:
@@ -118,7 +119,8 @@ def listing(request, listing_id):
         "highest_bid": highest_bid,
         "is_current_user_highest_bid": is_current_user_highest_bid,
         "is_watchlist": is_watchlist,
-        "message": message
+        "message": message,
+        "comments": comments
     })
 
 def create_listing(request):
@@ -175,6 +177,36 @@ def remove_from_watchlist(request, listing_id):
 def watchlist(request, username):
     current_user = request.user
     watchlist_objects = Watchlist.objects.filter(user=current_user)
-    return render(request, "auctions/watchlist.html", {
-        "watchlists": watchlist_objects
+    listings = []
+    for watchlist in watchlist_objects:
+        listings.append(watchlist.listing)
+
+    return render(request, "auctions/index.html", {
+        "listings": listings
+    })
+
+def add_comment(request, listing_id):
+    if request.method == "POST":
+        current_user = request.user
+        listing_item = AuctionListing.objects.get(pk=listing_id)
+        comment_text = request.POST["comment"]
+
+        new_comment = Commentary(user=current_user, listing=listing_item, text_comment=comment_text)
+        new_comment.save()
+
+        return HttpResponseRedirect(reverse("listing_item", args=[listing_id]))
+
+def category_list(request):
+    categories = Category.objects.all()
+
+    return render(request, "auctions/category_list.html", {
+        "categories": categories
+    })
+
+def category(request, category_name):
+    category = Category.objects.get(name=category_name)
+    listings = AuctionListing.objects.filter(category=category)
+
+    return render(request, "auctions/index.html", {
+        "listings": listings
     })
